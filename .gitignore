@@ -1,0 +1,37 @@
+###> symfony/framework-bundle ###
+/.env.local
+/.env.local.php
+/.env.*.local
+/config/secrets/prod/prod.decrypt.private.php
+/public/bundles/
+/var/
+/vendor/
+###< symfony/framework-bundle ###
+
+###> JWT Keys - NEVER commit these! ###
+/config/jwt/*.pem
+###< JWT Keys ###
+
+###> Docker ###
+.dockerignore
+###< Docker ###
+
+###> phpunit/phpunit ###
+/phpunit.xml
+/.phpunit.result.cache
+###< phpunit/phpunit ###
+
+###> Public uploads ###
+/public/uploads/*
+!/public/uploads/.gitkeep
+###< Public uploads ###
+
+###> IDE ###
+/.idea
+/.vscode
+*.swp
+###< IDE ###
+
+###> lexik/jwt-authentication-bundle ###
+/config/jwt/*.pem
+###< lexik/jwt-authentication-bundle ###

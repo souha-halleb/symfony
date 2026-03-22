@@ -1,0 +1,82 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Réserver — {{ event.title }}{% endblock %}
+
+{% block body %}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ path('home') }}">Accueil</a></li>
+        <li class="breadcrumb-item"><a href="{{ path('event_show', {'id': event.id}) }}">{{ event.title }}</a></li>
+        <li class="breadcrumb-item active">Réservation</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white py-3">
+                <h4 class="mb-0"><i class="bi bi-ticket-perforated me-2"></i>Formulaire de réservation</h4>
+            </div>
+            <div class="card-body p-4">
+                <!-- Résumé de l'événement -->
+                <div class="alert alert-info mb-4">
+                    <div class="fw-bold">{{ event.title }}</div>
+                    <small>
+                        <i class="bi bi-calendar3 me-1"></i>{{ event.date|date('d/m/Y à H:i') }}
+                        &nbsp;|&nbsp;
+                        <i class="bi bi-geo-alt me-1"></i>{{ event.location }}
+                    </small>
+                </div>
+
+                {% if errors is defined and errors|length > 0 %}
+                    <div class="alert alert-danger">
+                        <ul class="mb-0">
+                            {% for error in errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
+                <form method="post" novalidate>
+                    <div class="mb-3">
+                        <label for="name" class="form-label fw-semibold">
+                            <i class="bi bi-person me-1"></i>Nom complet <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="name" name="name"
+                               value="{{ reservation.name }}"
+                               placeholder="Ex : Mohamed Ben Ali" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label fw-semibold">
+                            <i class="bi bi-envelope me-1"></i>Adresse email <span class="text-danger">*</span>
+                        </label>
+                        <input type="email" class="form-control" id="email" name="email"
+                               value="{{ reservation.email }}"
+                               placeholder="exemple@email.com" required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="phone" class="form-label fw-semibold">
+                            <i class="bi bi-telephone me-1"></i>Téléphone <span class="text-danger">*</span>
+                        </label>
+                        <input type="tel" class="form-control" id="phone" name="phone"
+                               value="{{ reservation.phone }}"
+                               placeholder="+216 XX XXX XXX" required>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="bi bi-check-circle me-2"></i>Confirmer la réservation
+                        </button>
+                        <a href="{{ path('event_show', {'id': event.id}) }}" class="btn btn-outline-secondary">
+                            Annuler
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

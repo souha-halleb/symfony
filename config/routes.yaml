@@ -1,0 +1,10 @@
+controllers:
+    resource:
+        path: ../src/Controller/
+        namespace: App\Controller
+    type: attribute
+
+# Route de refresh token (gérée automatiquement par GesdinetBundle)
+api_token_refresh:
+    path: /api/token/refresh
+    methods: [POST]

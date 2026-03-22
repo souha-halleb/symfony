@@ -1,0 +1,3 @@
+webauthn:
+    credential_repository: App\Repository\WebauthnCredentialRepository
+    user_repository: App\Repository\UserRepository

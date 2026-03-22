@@ -1,0 +1,132 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Dashboard Admin — EventReservation{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="fw-bold mb-1"><i class="bi bi-speedometer2 me-2 text-primary"></i>Tableau de bord</h1>
+        <p class="text-muted mb-0">Bienvenue, <strong>{{ app.user.userIdentifier }}</strong> !</p>
+    </div>
+    <a href="{{ path('admin_logout') }}" class="btn btn-outline-danger btn-sm">
+        <i class="bi bi-box-arrow-right me-1"></i>Déconnexion
+    </a>
+</div>
+
+<!-- Statistiques -->
+<div class="row g-4 mb-5">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #0d6efd !important;">
+            <div class="card-body d-flex align-items-center gap-3 p-4">
+                <div class="rounded-circle bg-primary bg-opacity-10 p-3">
+                    <i class="bi bi-calendar-event fs-3 text-primary"></i>
+                </div>
+                <div>
+                    <div class="fs-2 fw-bold">{{ total_events }}</div>
+                    <div class="text-muted">Événements</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #198754 !important;">
+            <div class="card-body d-flex align-items-center gap-3 p-4">
+                <div class="rounded-circle bg-success bg-opacity-10 p-3">
+                    <i class="bi bi-ticket-perforated fs-3 text-success"></i>
+                </div>
+                <div>
+                    <div class="fs-2 fw-bold">{{ total_reservations }}</div>
+                    <div class="text-muted">Réservations totales</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #ffc107 !important;">
+            <div class="card-body d-flex align-items-center gap-3 p-4">
+                <div class="rounded-circle bg-warning bg-opacity-10 p-3">
+                    <i class="bi bi-calendar-check fs-3 text-warning"></i>
+                </div>
+                <div>
+                    {% set upcoming = events|filter(e => e.date > date()) %}
+                    <div class="fs-2 fw-bold">{{ upcoming|length }}</div>
+                    <div class="text-muted">À venir</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actions rapides -->
+<div class="row g-3 mb-5">
+    <div class="col-12">
+        <h4 class="fw-semibold mb-3">Actions rapides</h4>
+    </div>
+    <div class="col-md-4">
+        <a href="{{ path('admin_event_new') }}" class="card text-decoration-none border-dashed h-100"
+           style="border: 2px dashed #0d6efd; border-radius: 12px;">
+            <div class="card-body text-center py-4">
+                <i class="bi bi-plus-circle fs-2 text-primary"></i>
+                <p class="fw-semibold text-primary mt-2 mb-0">Créer un événement</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="{{ path('admin_event_index') }}" class="card text-decoration-none border-0 shadow-sm h-100">
+            <div class="card-body text-center py-4">
+                <i class="bi bi-list-ul fs-2 text-secondary"></i>
+                <p class="fw-semibold text-secondary mt-2 mb-0">Tous les événements</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="{{ path('home') }}" class="card text-decoration-none border-0 shadow-sm h-100">
+            <div class="card-body text-center py-4">
+                <i class="bi bi-globe fs-2 text-info"></i>
+                <p class="fw-semibold text-info mt-2 mb-0">Voir le site public</p>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- Tableau récapitulatif -->
+<div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-table me-2"></i>Événements récents</h5>
+        <a href="{{ path('admin_event_index') }}" class="btn btn-sm btn-outline-primary">Voir tout</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Événement</th>
+                    <th>Date</th>
+                    <th class="text-center">Réservations</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in events|slice(0, 5) %}
+                <tr>
+                    <td class="fw-semibold">{{ event.title }}</td>
+                    <td class="text-muted small">{{ event.date|date('d/m/Y H:i') }}</td>
+                    <td class="text-center">
+                        <span class="badge bg-{{ event.reservations|length >= event.seats ? 'danger' : 'success' }}">
+                            {{ event.reservations|length }} / {{ event.seats }}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <a href="{{ path('admin_event_show', {'id': event.id}) }}" class="btn btn-sm btn-outline-info">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <a href="{{ path('admin_event_edit', {'id': event.id}) }}" class="btn btn-sm btn-outline-warning ms-1">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

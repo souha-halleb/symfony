@@ -1,0 +1,19 @@
+parameters:
+    uploads_dir: '%kernel.project_dir%/public/uploads'
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+
+    App\Service\PasskeyAuthService:
+        arguments:
+            $appDomain: '%env(APP_DOMAIN)%'
+            $rpName: '%env(WEBAUTHN_RP_NAME)%'

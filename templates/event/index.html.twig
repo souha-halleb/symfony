@@ -1,0 +1,115 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des événements — Admin{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="fw-bold mb-1"><i class="bi bi-calendar-week me-2 text-primary"></i>Gestion des événements</h1>
+        <p class="text-muted mb-0">{{ events|length }} événement{{ events|length > 1 ? 's' : '' }} au total</p>
+    </div>
+    <a href="{{ path('admin_event_new') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-2"></i>Nouvel événement
+    </a>
+</div>
+
+{% if events is empty %}
+    <div class="text-center py-5">
+        <i class="bi bi-calendar-x fs-1 text-muted"></i>
+        <p class="text-muted mt-3">Aucun événement. Créez le premier !</p>
+        <a href="{{ path('admin_event_new') }}" class="btn btn-primary mt-2">
+            <i class="bi bi-plus-circle me-2"></i>Créer un événement
+        </a>
+    </div>
+{% else %}
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>Titre</th>
+                        <th>Date</th>
+                        <th>Lieu</th>
+                        <th class="text-center">Places</th>
+                        <th class="text-center">Réservations</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for event in events %}
+                    <tr>
+                        <td class="text-muted small">{{ event.id }}</td>
+                        <td>
+                            <div class="fw-semibold">{{ event.title }}</div>
+                            <small class="text-muted">{{ event.description|slice(0,60) }}…</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border">
+                                <i class="bi bi-calendar3 me-1"></i>{{ event.date|date('d/m/Y') }}
+                            </span><br>
+                            <small class="text-muted">{{ event.date|date('H:i') }}</small>
+                        </td>
+                        <td><i class="bi bi-geo-alt text-danger me-1"></i>{{ event.location }}</td>
+                        <td class="text-center">
+                            <span class="badge bg-secondary">{{ event.seats }}</span>
+                        </td>
+                        <td class="text-center">
+                            {% set count = event.reservations|length %}
+                            {% set pct   = event.seats > 0 ? (count / event.seats * 100)|round : 0 %}
+                            <div class="d-flex align-items-center gap-2 justify-content-center">
+                                <div class="progress flex-grow-1" style="height:8px;min-width:60px;">
+                                    <div class="progress-bar {{ pct >= 90 ? 'bg-danger' : (pct >= 60 ? 'bg-warning' : 'bg-success') }}"
+                                         style="width:{{ pct }}%"></div>
+                                </div>
+                                <small class="text-muted">{{ count }}/{{ event.seats }}</small>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ path('admin_event_show', {'id': event.id}) }}"
+                                   class="btn btn-outline-info" title="Voir réservations">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ path('admin_event_edit', {'id': event.id}) }}"
+                                   class="btn btn-outline-warning" title="Modifier">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button type="button" class="btn btn-outline-danger"
+                                        title="Supprimer"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#deleteModal{{ event.id }}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+
+                            <!-- Modal confirmation suppression -->
+                            <div class="modal fade" id="deleteModal{{ event.id }}" tabindex="-1">
+                                <div class="modal-dialog modal-sm">
+                                    <div class="modal-content">
+                                        <div class="modal-header bg-danger text-white">
+                                            <h6 class="modal-title">Supprimer ?</h6>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p class="mb-0">Supprimer <strong>{{ event.title }}</strong> et toutes ses réservations ?</p>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Annuler</button>
+                                            <form method="post" action="{{ path('admin_event_delete', {'id': event.id}) }}" class="d-inline">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ event.id) }}">
+                                                <button type="submit" class="btn btn-danger btn-sm">Supprimer</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

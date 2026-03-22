@@ -1,0 +1,59 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Réservation confirmée !{% endblock %}
+
+{% block body %}
+<div class="row justify-content-center">
+    <div class="col-md-7 col-lg-6 text-center">
+        <div class="card shadow-sm border-success">
+            <div class="card-body py-5 px-4">
+                <div class="mb-4">
+                    <i class="bi bi-check-circle-fill text-success" style="font-size:4rem;"></i>
+                </div>
+                <h2 class="fw-bold text-success mb-2">Réservation confirmée !</h2>
+                <p class="text-muted mb-4">Votre réservation a été enregistrée avec succès.</p>
+
+                <div class="card bg-light border-0 text-start mb-4">
+                    <div class="card-body">
+                        <h6 class="text-muted text-uppercase small mb-3">Récapitulatif</h6>
+                        <table class="table table-borderless table-sm mb-0">
+                            <tr>
+                                <td class="text-muted fw-semibold" style="width:40%">Événement</td>
+                                <td class="fw-bold">{{ reservation.event.title }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted fw-semibold">Date</td>
+                                <td>{{ reservation.event.date|date('d/m/Y à H:i') }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted fw-semibold">Lieu</td>
+                                <td>{{ reservation.event.location }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted fw-semibold">Nom</td>
+                                <td>{{ reservation.name }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted fw-semibold">Email</td>
+                                <td>{{ reservation.email }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted fw-semibold">Téléphone</td>
+                                <td>{{ reservation.phone }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted fw-semibold">N° de réservation</td>
+                                <td><span class="badge bg-primary">#{{ reservation.id }}</span></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <a href="{{ path('home') }}" class="btn btn-primary">
+                    <i class="bi bi-calendar-event me-2"></i>Voir d'autres événements
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
