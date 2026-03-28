@@ -1,16 +1,13 @@
 {% extends 'base.html.twig' %}
-
 {% block title %}Événements à venir — EventReservation{% endblock %}
-
 {% block body %}
+<div class="container">
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h1 class="fw-bold mb-1"><i class="bi bi-calendar2-event me-2 text-primary"></i>Événements à venir</h1>
-        <p class="text-muted mb-0">Découvrez et réservez vos prochains événements</p>
+        <h1 class="fw-bold mb-1"><i class="bi bi-calendar2-event me-2 text-primary"></i>Événements</h1>
     </div>
     <span class="badge bg-primary fs-6">{{ events|length }} événement{{ events|length > 1 ? 's' : '' }}</span>
 </div>
-
 {% if events is empty %}
     <div class="text-center py-5">
         <i class="bi bi-calendar-x fs-1 text-muted"></i>
@@ -63,4 +60,5 @@
         {% endfor %}
     </div>
 {% endif %}
+</div>
 {% endblock %}

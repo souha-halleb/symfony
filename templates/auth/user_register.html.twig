@@ -1,0 +1,132 @@
+{% extends 'base.html.twig' %}
+{% block title %}Créer un compte{% endblock %}
+{% block body %}
+<div class="container">
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="text-center mb-4">
+            <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                 style="width:64px;height:64px;">
+                <i class="bi bi-person-plus fs-2"></i>
+            </div>
+            <h3 class="fw-bold">Créer un compte</h3>
+            <p class="text-muted small">EventReservation — ISSAT Sousse</p>
+        </div>
+
+        <div class="card shadow">
+            <div class="card-body p-4">
+                <ul class="nav nav-tabs nav-justified mb-0">
+                    <li class="nav-item">
+                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#pane-password">
+                            <i class="bi bi-lock me-1"></i>Email + Mot de passe
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#pane-passkey">
+                            <i class="bi bi-fingerprint me-1"></i>Passkey
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content pt-4">
+
+                    <!-- Email + Password -->
+                    <div class="tab-pane fade show active" id="pane-password">
+                        {% if error %}
+                            <div class="alert alert-danger">{{ error }}</div>
+                        {% endif %}
+                        <form method="post">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Email</label>
+                                <input type="email" name="email" class="form-control"
+                                       placeholder="votre@email.com" required autofocus>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Mot de passe</label>
+                                <div class="input-group">
+                                    <input type="password" name="password" id="reg-password" class="form-control"
+                                           placeholder="Min. 6 caractères" required>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="togglePwd()">
+                                        <i class="bi bi-eye" id="eye-icon"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold">Confirmer le mot de passe</label>
+                                <input type="password" name="confirm" class="form-control"
+                                       placeholder="Répétez le mot de passe" required>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100 py-2">
+                                <i class="bi bi-check-circle me-2"></i>Créer mon compte
+                            </button>
+                        </form>
+                        <hr>
+                        <div class="text-center">
+                            <p class="text-muted small">Déjà un compte ?</p>
+                            <a href="{{ path('user_login') }}" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-box-arrow-in-right me-1"></i>Se connecter
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Passkey -->
+                    <div class="tab-pane fade" id="pane-passkey">
+                        <div id="webauthn-warning" class="alert alert-warning d-none">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Votre navigateur ne supporte pas WebAuthn.
+                        </div>
+
+                        <div id="passkey-status" class="mb-3 d-none"></div>
+
+                        <div class="mb-4">
+                            <h6 class="fw-semibold mb-3">
+                                <i class="bi bi-key text-primary me-2"></i>Créer un compte avec une Passkey
+                            </h6>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Email</label>
+                                <input type="email" id="passkey-email" class="form-control"
+                                       placeholder="votre@email.com">
+                            </div>
+                            <button id="btn-register-passkey" class="btn btn-primary w-100 py-2 btn-passkey">
+                                <i class="bi bi-fingerprint me-2"></i>Créer ma Passkey
+                            </button>
+                        </div>
+
+                        <div class="mt-3 p-3 bg-light rounded small text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Les Passkeys utilisent FIDO2/WebAuthn. Votre empreinte ne quitte jamais votre appareil.
+                        </div>
+
+                        <hr>
+                        <div class="text-center">
+                            <p class="text-muted small">Déjà un compte ?</p>
+                            <a href="{{ path('user_login') }}" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-box-arrow-in-right me-1"></i>Se connecter
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ asset('js/auth.js') }}"></script>
+<script>
+function togglePwd() {
+    const input = document.getElementById('reg-password');
+    const icon  = document.getElementById('eye-icon');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'bi bi-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'bi bi-eye';
+    }
+}
+</script>
+{% endblock %}

@@ -17,13 +17,19 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
 
-        # Endpoints WebAuthn/Passkeys : publics (pas de JWT requis)
+        # Tous les endpoints /api/auth/ sont publics
         auth_api:
-            pattern: ^/api/auth/(register|login)
+            pattern: ^/api/auth/
             stateless: true
             security: false
 
-        # Firewall admin : formulaire login classique (session)
+        # Refresh token public
+        api_refresh:
+            pattern: ^/api/token/refresh
+            stateless: true
+            security: false
+
+        # Firewall admin
         admin:
             pattern: ^/admin
             provider: admin_provider
@@ -41,17 +47,35 @@ security:
                 secret: '%kernel.secret%'
                 lifetime: 604800
 
-        # API principale : protégée par JWT (stateless)
+        # API principale protégée par JWT
         api:
             pattern: ^/api
             stateless: true
             provider: app_user_provider
             jwt: ~
 
+        # Firewall utilisateur (site public)
+        main:
+            pattern: ^/
+            provider: app_user_provider
+            form_login:
+                login_path: user_login
+                check_path: user_login
+                default_target_path: home
+                username_parameter: _username
+                password_parameter: _password
+                enable_csrf: true
+            logout:
+                path: user_logout
+                target: home
+
     access_control:
-        - { path: ^/api/auth/(register|login), roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/, roles: PUBLIC_ACCESS }
         - { path: ^/api/token/refresh, roles: PUBLIC_ACCESS }
         - { path: ^/admin/login, roles: PUBLIC_ACCESS }
         - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/register, roles: PUBLIC_ACCESS }
+        - { path: ^/login, roles: PUBLIC_ACCESS }
+        - { path: ^/logout, roles: PUBLIC_ACCESS }
         - { path: ^/api, roles: ROLE_USER }
         - { path: ^/, roles: PUBLIC_ACCESS }

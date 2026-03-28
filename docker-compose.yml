@@ -59,16 +59,15 @@ services:
     networks:
       - app_network
 
-  phpmyadmin:
-    image: phpmyadmin:latest
-    container_name: event_phpmyadmin
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: event_pgadmin
     restart: unless-stopped
     ports:
       - "8081:80"
     environment:
-      PMA_HOST: db
-      PMA_USER: app_user
-      PMA_PASSWORD: app_password
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin1234
     depends_on:
       - db
     networks:

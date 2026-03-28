@@ -1,0 +1,141 @@
+{% extends 'base.html.twig' %}
+{% block title %}Connexion{% endblock %}
+{% block body %}
+<div class="container">
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="text-center mb-4">
+            <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                 style="width:64px;height:64px;">
+                <i class="bi bi-person-lock fs-2"></i>
+            </div>
+            <h3 class="fw-bold">Connexion</h3>
+            <p class="text-muted small">EventReservation — ISSAT Sousse</p>
+        </div>
+        <div class="card shadow">
+            <div class="card-body p-4">
+                <ul class="nav nav-tabs nav-justified mb-0">
+                    <li class="nav-item">
+                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#pane-password">
+                            <i class="bi bi-lock me-1"></i>Email + Mot de passe
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#pane-passkey">
+                            <i class="bi bi-fingerprint me-1"></i>Passkey
+                        </button>
+                    </li>
+                </ul>
+                <div class="tab-content pt-4">
+                    <div class="tab-pane fade show active" id="pane-password">
+                        <div id="login-alert" class="d-none"></div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Email</label>
+                            <input type="email" id="login-email" class="form-control"
+                                   placeholder="votre@email.com" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Mot de passe</label>
+                            <div class="input-group">
+                                <input type="password" id="login-password" class="form-control"
+                                       placeholder="••••••••" required>
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePwd()">
+                                    <i class="bi bi-eye" id="eye-icon"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button onclick="loginWithJwt()" class="btn btn-primary w-100 py-2">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Se connecter
+                        </button>
+                        <hr>
+                        <div class="text-center">
+                            <p class="text-muted small mb-2">Pas encore de compte ?</p>
+                            <a href="{{ path('user_register') }}" class="btn btn-outline-success btn-sm">
+                                <i class="bi bi-person-plus me-1"></i>Créer un compte
+                            </a>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="pane-passkey">
+                        <div id="webauthn-warning" class="alert alert-warning d-none">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Votre navigateur ne supporte pas WebAuthn.
+                        </div>
+                        <div id="passkey-status" class="mb-3 d-none"></div>
+                        <h6 class="fw-semibold mb-3">
+                            <i class="bi bi-fingerprint text-success me-2"></i>Se connecter avec une Passkey
+                        </h6>
+                        <button id="btn-login-passkey" class="btn btn-success w-100 py-2 btn-passkey">
+                            <i class="bi bi-shield-check me-2"></i>Utiliser ma Passkey
+                        </button>
+                        <div class="mt-3 p-3 bg-light rounded small text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Les Passkeys utilisent FIDO2/WebAuthn. Votre empreinte ne quitte jamais votre appareil.
+                        </div>
+                        <hr>
+                        <div class="text-center">
+                            <p class="text-muted small mb-2">Pas encore de compte ?</p>
+                            <a href="{{ path('user_register') }}" class="btn btn-outline-success btn-sm">
+                                <i class="bi bi-person-plus me-1"></i>Créer un compte
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ asset('js/auth.js') }}"></script>
+<script>
+function togglePwd() {
+    const input = document.getElementById('login-password');
+    const icon  = document.getElementById('eye-icon');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'bi bi-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'bi bi-eye';
+    }
+}
+
+async function loginWithJwt() {
+    const email    = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    const alertDiv = document.getElementById('login-alert');
+
+    if (!email || !password) {
+        alertDiv.className = 'alert alert-warning';
+        alertDiv.textContent = 'Veuillez remplir tous les champs.';
+        alertDiv.classList.remove('d-none');
+        return;
+    }
+
+    try {
+        const res  = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+
+        if (data.token) {
+            localStorage.setItem('jwt_token', data.token);
+            localStorage.setItem('refresh_token', data.refresh_token);
+            window.location.href = '/';
+        } else {
+            alertDiv.className = 'alert alert-danger';
+            alertDiv.textContent = data.error || 'Erreur de connexion.';
+            alertDiv.classList.remove('d-none');
+        }
+    } catch (e) {
+        alertDiv.className = 'alert alert-danger';
+        alertDiv.textContent = 'Erreur serveur.';
+        alertDiv.classList.remove('d-none');
+    }
+}
+</script>
+{% endblock %}

@@ -3,6 +3,8 @@
 {% block title %}{{ mode == 'new' ? 'Nouvel événement' : 'Modifier : ' ~ event.title }} — Admin{% endblock %}
 
 {% block body %}
+<div class="container">
+
 <nav aria-label="breadcrumb" class="mb-4">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{{ path('admin_dashboard') }}">Dashboard</a></li>
@@ -92,4 +94,6 @@
         </div>
     </div>
 </div>
+</div>
+
 {% endblock %}

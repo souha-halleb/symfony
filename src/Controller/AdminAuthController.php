@@ -6,9 +6,16 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
+/**
+ * controleur responsable de l authentification des administrateurs
+ */
 
 class AdminAuthController extends AbstractController
-{
+{/**
+     * Route pour la page de connexion admin
+     * URL : /admin/login
+     * Nom de la route : admin_login
+     */
     #[Route('/admin/login', name: 'admin_login')]
     public function login(AuthenticationUtils $authenticationUtils): Response
     {
@@ -28,7 +35,7 @@ class AdminAuthController extends AbstractController
     #[Route('/admin/logout', name: 'admin_logout')]
     public function logout(): void
     {
-        // Géré automatiquement par Symfony Security
+        
         throw new \LogicException('Cette méthode ne devrait jamais être appelée directement.');
     }
 }

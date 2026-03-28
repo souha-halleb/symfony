@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+{% block title %}Modifier la réservation{% endblock %}
+{% block body %}
+<div class="container">
+    <h1 class="fw-bold mb-4">Modifier la réservation</h1>
+    <form method="post">
+        <div class="mb-3">
+            <label class="form-label">Nom</label>
+            <input type="text" name="name" class="form-control" value="{{ reservation.name }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" class="form-control" value="{{ reservation.email }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Téléphone</label>
+            <input type="text" name="phone" class="form-control" value="{{ reservation.phone }}">
+        </div>
+        <button type="submit" class="btn btn-warning">Enregistrer</button>
+        <a href="{{ path('admin_users') }}" class="btn btn-secondary">Annuler</a>
+    </form>
+</div>
+{% endblock %}

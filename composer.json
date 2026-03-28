@@ -31,6 +31,8 @@
         "symfony/validator": "7.*",
         "symfony/yaml": "7.*",
         "twig/extra-bundle": "^3.0",
+        "twig/intl-extra": "^3.24",
+        "web-auth/webauthn-lib": "^4.9",
         "web-auth/webauthn-symfony-bundle": "*"
     },
     "require-dev": {

@@ -14,10 +14,18 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\String\Slugger\SluggerInterface;
 
+
+/**
+ * Contrôleur de gestion des événements (CRUD)
+ * Accessible uniquement aux administrateurs
+ */
 #[Route('/admin/events')]
 #[IsGranted('ROLE_ADMIN')]
 class EventController extends AbstractController
-{
+{/**
+     * Affiche la liste des evenements
+     * Route : GET /admin/events/
+     */
     #[Route('/', name: 'admin_event_index', methods: ['GET'])]
     public function index(EventRepository $eventRepo): Response
     {
@@ -25,7 +33,10 @@ class EventController extends AbstractController
             'events' => $eventRepo->findAll(),
         ]);
     }
-
+ /**
+     * creation d’un nouvel evenement
+     * Route : GET + POST /admin/events/new
+     */
     #[Route('/new', name: 'admin_event_new', methods: ['GET', 'POST'])]
     public function new(
         Request $request,
@@ -54,7 +65,10 @@ class EventController extends AbstractController
             'reservations' => $reservationRepo->findByEvent($event->getId()),
         ]);
     }
-
+/**
+     * Modification d’un événement
+     * Route : GET + POST /admin/events/{id}/edit
+     */
     #[Route('/{id}/edit', name: 'admin_event_edit', methods: ['GET', 'POST'])]
     public function edit(
         Event $event,
@@ -73,7 +87,10 @@ class EventController extends AbstractController
             'mode'  => 'edit',
         ]);
     }
-
+ /**
+     * Suppression d’un événement
+     * Route : POST /admin/events/{id}/delete
+     */
     #[Route('/{id}/delete', name: 'admin_event_delete', methods: ['POST'])]
     public function delete(Event $event, EntityManagerInterface $em, Request $request): Response
     {
@@ -118,7 +135,7 @@ class EventController extends AbstractController
                 $imageFile->move($this->getParameter('uploads_dir'), $newFilename);
                 $event->setImage($newFilename);
             } catch (FileException $e) {
-                // Log error
+                
             }
         }
 

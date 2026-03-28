@@ -12,6 +12,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/api/auth')]
@@ -23,6 +24,84 @@ class AuthApiController extends AbstractController
         private EntityManagerInterface $em,
         private UserRepository $userRepo
     ) {}
+
+    // ── JWT Email + Password ──
+
+    #[Route('/login', name: 'api_login', methods: ['POST'])]
+    public function login(Request $request, UserPasswordHasherInterface $hasher): JsonResponse
+    {
+        $data     = json_decode($request->getContent(), true);
+        $email    = $data['email'] ?? null;
+        $password = $data['password'] ?? null;
+
+        if (!$email || !$password) {
+            return $this->json(['error' => 'Email et mot de passe requis.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $user = $this->userRepo->findOneBy(['email' => $email]);
+        if (!$user || !$hasher->isPasswordValid($user, $password)) {
+            return $this->json(['error' => 'Email ou mot de passe incorrect.'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $jwt     = $this->jwtManager->create($user);
+        $refresh = $this->refreshGenerator->createForUserWithTtl($user, 2592000);
+
+        return $this->json([
+            'success'       => true,
+            'token'         => $jwt,
+            'refresh_token' => $refresh->getRefreshToken(),
+            'user'          => [
+                'id'    => (string) $user->getId(),
+                'email' => $user->getEmail(),
+                'roles' => $user->getRoles(),
+            ],
+        ]);
+    }
+
+    #[Route('/register', name: 'api_register', methods: ['POST'])]
+    public function register(Request $request, UserPasswordHasherInterface $hasher): JsonResponse
+    {
+        $data     = json_decode($request->getContent(), true);
+        $email    = $data['email'] ?? null;
+        $password = $data['password'] ?? null;
+
+        if (!$email || !$password) {
+            return $this->json(['error' => 'Email et mot de passe requis.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return $this->json(['error' => 'Email invalide.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        if (strlen($password) < 6) {
+            return $this->json(['error' => 'Mot de passe trop court (min. 6 caractères).'], Response::HTTP_BAD_REQUEST);
+        }
+
+        if ($this->userRepo->findOneBy(['email' => $email])) {
+            return $this->json(['error' => 'Email déjà utilisé.'], Response::HTTP_CONFLICT);
+        }
+
+        $user = new User($email);
+        $user->setPassword($hasher->hashPassword($user, $password));
+        $this->em->persist($user);
+        $this->em->flush();
+
+        $jwt     = $this->jwtManager->create($user);
+        $refresh = $this->refreshGenerator->createForUserWithTtl($user, 2592000);
+
+        return $this->json([
+            'success'       => true,
+            'token'         => $jwt,
+            'refresh_token' => $refresh->getRefreshToken(),
+            'user'          => [
+                'id'    => (string) $user->getId(),
+                'email' => $user->getEmail(),
+                'roles' => $user->getRoles(),
+            ],
+        ], Response::HTTP_CREATED);
+    }
+
+    // ── Passkey (WebAuthn) ──
 
     #[Route('/register/options', name: 'api_register_options', methods: ['POST'])]
     public function registerOptions(Request $request, PasskeyAuthService $passkeyService): JsonResponse
