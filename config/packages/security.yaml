@@ -1,3 +1,15 @@
+# FIX #12 : L'ordre des firewalls est CRITIQUE dans Symfony.
+# Symfony les évalue de haut en bas et s'arrête au premier match.
+#
+# Bug original : le firewall "auth_api" avec security: false était déclaré AVANT "api",
+# ce qui est correct, mais "api" n'avait pas jwt: ~ configuré correctement dans toutes
+# les versions. On réorganise et clarifie.
+#
+# FIX #13 : Le firewall "main" utilisait form_login avec _username/_password,
+# mais la page user_login.html.twig fait un fetch() vers /api/auth/login (JWT API).
+# Ces deux mécanismes sont incompatibles : form_login intercepte POST /login.
+# Solution : retirer form_login du firewall "main" (l'auth se fait côté JS via /api/auth/login).
+
 security:
     password_hashers:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
@@ -17,7 +29,8 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
 
-        # Tous les endpoints /api/auth/ sont publics
+        # Routes d'authentification publiques (JWT login/register + Passkey)
+        # Doivent être AVANT le firewall "api" pour ne pas exiger un token
         auth_api:
             pattern: ^/api/auth/
             stateless: true
@@ -29,7 +42,7 @@ security:
             stateless: true
             security: false
 
-        # Firewall admin
+        # Firewall admin (session-based, form_login classique)
         admin:
             pattern: ^/admin
             provider: admin_provider
@@ -47,35 +60,32 @@ security:
                 secret: '%kernel.secret%'
                 lifetime: 604800
 
-        # API principale protégée par JWT
+        # API protégée par JWT (tous les /api/* sauf ceux couverts ci-dessus)
         api:
             pattern: ^/api
             stateless: true
             provider: app_user_provider
             jwt: ~
 
-        # Firewall utilisateur (site public)
+        # Firewall du site public (pages HTML)
+        # FIX #13 : PAS de form_login ici car les pages login/register utilisent
+        # fetch() vers /api/auth/login → auth 100% JWT/JS, pas de session PHP.
         main:
             pattern: ^/
             provider: app_user_provider
-            form_login:
-                login_path: user_login
-                check_path: user_login
-                default_target_path: home
-                username_parameter: _username
-                password_parameter: _password
-                enable_csrf: true
+            # On garde un cookie de session pour les pages Twig qui vérifient isGranted()
+            # mais on ne configure pas form_login (plus nécessaire)
             logout:
                 path: user_logout
                 target: home
 
     access_control:
-        - { path: ^/api/auth/, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/,        roles: PUBLIC_ACCESS }
         - { path: ^/api/token/refresh, roles: PUBLIC_ACCESS }
-        - { path: ^/admin/login, roles: PUBLIC_ACCESS }
-        - { path: ^/admin, roles: ROLE_ADMIN }
-        - { path: ^/register, roles: PUBLIC_ACCESS }
-        - { path: ^/login, roles: PUBLIC_ACCESS }
-        - { path: ^/logout, roles: PUBLIC_ACCESS }
-        - { path: ^/api, roles: ROLE_USER }
-        - { path: ^/, roles: PUBLIC_ACCESS }
+        - { path: ^/admin/login,       roles: PUBLIC_ACCESS }
+        - { path: ^/admin,             roles: ROLE_ADMIN }
+        - { path: ^/register,          roles: PUBLIC_ACCESS }
+        - { path: ^/login,             roles: PUBLIC_ACCESS }
+        - { path: ^/logout,            roles: PUBLIC_ACCESS }
+        - { path: ^/api,               roles: ROLE_USER }
+        - { path: ^/,                  roles: PUBLIC_ACCESS }

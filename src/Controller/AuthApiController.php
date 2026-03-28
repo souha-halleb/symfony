@@ -39,7 +39,10 @@ class AuthApiController extends AbstractController
         }
 
         $user = $this->userRepo->findOneBy(['email' => $email]);
-        if (!$user || !$hasher->isPasswordValid($user, $password)) {
+
+        // FIX #9 : un user créé via Passkey n'a pas de mot de passe (password = null).
+        // Sans cette vérification, isPasswordValid() lève une exception.
+        if (!$user || $user->getPassword() === null || !$hasher->isPasswordValid($user, $password)) {
             return $this->json(['error' => 'Email ou mot de passe incorrect.'], Response::HTTP_UNAUTHORIZED);
         }
 
@@ -115,7 +118,10 @@ class AuthApiController extends AbstractController
 
         $user = $this->userRepo->findOneBy(['email' => $email]);
         if (!$user) {
+            // FIX #10 : un user créé pour la Passkey n'a pas de mot de passe.
+            // C'est volontaire : il s'authentifiera uniquement via Passkey.
             $user = new User($email);
+            // Pas de setPassword() → password reste null (authorisé par nullable: true dans l'entité)
             $this->em->persist($user);
             $this->em->flush();
         }
@@ -140,7 +146,10 @@ class AuthApiController extends AbstractController
         }
 
         try {
+            // FIX #11 : on passe json_encode($credential) pour que le service
+            // reçoive une string JSON propre (le credential est déjà un tableau décodé)
             $passkeyService->verifyRegistration(json_encode($credential), $user);
+
             $jwt     = $this->jwtManager->create($user);
             $refresh = $this->refreshGenerator->createForUserWithTtl($user, 2592000);
 

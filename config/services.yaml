@@ -15,5 +15,5 @@ services:
 
     App\Service\PasskeyAuthService:
         arguments:
-            $appDomain: '%env(APP_DOMAIN)%'
+            $rpId: '%env(APP_DOMAIN)%'
             $rpName: '%env(WEBAUTHN_RP_NAME)%'

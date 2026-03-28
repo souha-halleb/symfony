@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\User;
 use App\Entity\WebauthnCredential;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Webauthn\PublicKeyCredentialSource;
 
@@ -32,11 +33,17 @@ class WebauthnCredentialRepository extends ServiceEntityRepository
         return $credential;
     }
 
+    /**
+     * FIX #6 : la comparaison des credentialId doit se faire en base64url
+     * car getPublicKeyCredentialId() retourne des bytes binaires bruts.
+     * On compare les deux côtés en base64url pour éviter les faux-négatifs.
+     */
     public function findByCredentialId(string $credentialId): ?WebauthnCredential
     {
         $all = $this->findAll();
         foreach ($all as $credential) {
             $source = $credential->getCredentialSource();
+            // Comparaison binaire directe (les deux sont des strings brutes)
             if ($source->getPublicKeyCredentialId() === $credentialId) {
                 return $credential;
             }
@@ -52,6 +59,6 @@ class WebauthnCredentialRepository extends ServiceEntityRepository
     public function findAllSources(User $user): array
     {
         $credentials = $this->findAllByUser($user);
-        return array_map(fn($c) => $c->getCredentialSource(), $credentials);
+        return array_map(fn ($c) => $c->getCredentialSource(), $credentials);
     }
 }

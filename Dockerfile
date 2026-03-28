@@ -1,6 +1,6 @@
 FROM php:8.4-fpm
 
-ARG APP_ENV=prod
+ARG APP_ENV=dev
 
 RUN apt-get update && apt-get install -y \
     git \
@@ -12,11 +12,11 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     libicu-dev \
     && docker-php-ext-install \
-        pdo \
-        pdo_pgsql \
-        opcache \
-        zip \
-        intl \
+    pdo \
+    pdo_pgsql \
+    opcache \
+    zip \
+    intl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

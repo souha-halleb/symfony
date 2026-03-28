@@ -1,3 +1,12 @@
 webauthn:
     credential_repository: App\Repository\WebauthnCredentialRepository
     user_repository: App\Repository\UserRepository
+    creation_profiles:
+        default:
+            rp:
+                id: '%env(APP_DOMAIN)%'
+                name: '%env(WEBAUTHN_RP_NAME)%'
+    request_profiles:
+        default:
+            rp_id: '%env(APP_DOMAIN)%'
+            user_verification: 'preferred'
