@@ -78,11 +78,9 @@ document.addEventListener('DOMContentLoaded', function () {
     btn.addEventListener('click', function () {
         const token = localStorage.getItem('jwt_token');
         if (!token) {
-            // Pas connecté → rediriger vers login
             window.location.href = '/login';
             return;
         }
-        // Connecté → aller à la page de réservation
         window.location.href = btn.getAttribute('data-url');
     });
 });

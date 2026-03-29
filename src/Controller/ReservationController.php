@@ -47,7 +47,7 @@ class ReservationController extends AbstractController
         if ($request->isMethod('POST')) {
             $reservation->setEvent($event);
             $reservation->setName($request->request->get('name', ''));
-            $reservation->setEmail($request->request->get('email', ''));
+            $reservation->setEmail($this->getUser() ? $this->getUser()->getUserIdentifier() : $request->request->get('email', ''));
             $reservation->setPhone($request->request->get('phone', ''));
 
             $violations = $validator->validate($reservation);
