@@ -22,10 +22,7 @@ use Symfony\Component\String\Slugger\SluggerInterface;
 #[Route('/admin/events')]
 #[IsGranted('ROLE_ADMIN')]
 class EventController extends AbstractController
-{/**
-     * Affiche la liste des evenements
-     * Route : GET /admin/events/
-     */
+{
     #[Route('/', name: 'admin_event_index', methods: ['GET'])]
     public function index(EventRepository $eventRepo): Response
     {
@@ -33,10 +30,7 @@ class EventController extends AbstractController
             'events' => $eventRepo->findAll(),
         ]);
     }
- /**
-     * creation d’un nouvel evenement
-     * Route : GET + POST /admin/events/new
-     */
+ 
     #[Route('/new', name: 'admin_event_new', methods: ['GET', 'POST'])]
     public function new(
         Request $request,
@@ -65,10 +59,7 @@ class EventController extends AbstractController
             'reservations' => $reservationRepo->findByEvent($event->getId()),
         ]);
     }
-/**
-     * Modification d’un événement
-     * Route : GET + POST /admin/events/{id}/edit
-     */
+
     #[Route('/{id}/edit', name: 'admin_event_edit', methods: ['GET', 'POST'])]
     public function edit(
         Event $event,
@@ -87,15 +78,11 @@ class EventController extends AbstractController
             'mode'  => 'edit',
         ]);
     }
- /**
-     * Suppression d’un événement
-     * Route : POST /admin/events/{id}/delete
-     */
+
     #[Route('/{id}/delete', name: 'admin_event_delete', methods: ['POST'])]
     public function delete(Event $event, EntityManagerInterface $em, Request $request): Response
     {
         if ($this->isCsrfTokenValid('delete' . $event->getId(), $request->request->get('_token'))) {
-            // Supprimer l'image si elle existe
             if ($event->getImage()) {
                 $imagePath = $this->getParameter('uploads_dir') . '/' . $event->getImage();
                 if (file_exists($imagePath)) {
@@ -124,7 +111,6 @@ class EventController extends AbstractController
         $event->setLocation($data->get('location', ''));
         $event->setSeats((int) $data->get('seats', 0));
 
-        // Gestion upload image
         $imageFile = $request->files->get('image');
         if ($imageFile) {
             $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);

@@ -7,6 +7,7 @@ use App\Repository\UserRepository;
 use App\Service\PasskeyAuthService;
 use Doctrine\ORM\EntityManagerInterface;
 use Gesdinet\JWTRefreshTokenBundle\Generator\RefreshTokenGeneratorInterface;
+use Gesdinet\JWTRefreshTokenBundle\Model\RefreshTokenManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -21,11 +22,29 @@ class AuthApiController extends AbstractController
     public function __construct(
         private JWTTokenManagerInterface $jwtManager,
         private RefreshTokenGeneratorInterface $refreshGenerator,
+        private RefreshTokenManagerInterface $refreshManager,   // ✅ ajouté
         private EntityManagerInterface $em,
         private UserRepository $userRepo
     ) {}
 
-    // ── JWT Email + Password ──
+    private function createAndSaveRefreshToken(User $user): string
+    {
+        try {
+            $refresh = $this->refreshGenerator->createForUserWithTtl($user, 2592000);
+
+            if (!$refresh) {
+                return '';
+            }
+
+            $this->refreshManager->save($refresh);  // ✅ fonctionne maintenant
+
+            return $refresh->getRefreshToken() ?? '';
+
+        } catch (\Throwable $e) {
+            error_log('REFRESH ERROR: ' . $e->getMessage());
+            return '';
+        }
+    }
 
     #[Route('/login', name: 'api_login', methods: ['POST'])]
     public function login(Request $request, UserPasswordHasherInterface $hasher): JsonResponse
@@ -40,19 +59,17 @@ class AuthApiController extends AbstractController
 
         $user = $this->userRepo->findOneBy(['email' => $email]);
 
-        // FIX #9 : un user créé via Passkey n'a pas de mot de passe (password = null).
-        // Sans cette vérification, isPasswordValid() lève une exception.
         if (!$user || $user->getPassword() === null || !$hasher->isPasswordValid($user, $password)) {
             return $this->json(['error' => 'Email ou mot de passe incorrect.'], Response::HTTP_UNAUTHORIZED);
         }
 
-        $jwt     = $this->jwtManager->create($user);
-        $refresh = $this->refreshGenerator->createForUserWithTtl($user, 2592000);
+        $jwt          = $this->jwtManager->create($user);
+        $refreshToken = $this->createAndSaveRefreshToken($user);
 
         return $this->json([
             'success'       => true,
             'token'         => $jwt,
-            'refresh_token' => $refresh->getRefreshToken(),
+            'refresh_token' => $refreshToken,
             'user'          => [
                 'id'    => (string) $user->getId(),
                 'email' => $user->getEmail(),
@@ -89,13 +106,13 @@ class AuthApiController extends AbstractController
         $this->em->persist($user);
         $this->em->flush();
 
-        $jwt     = $this->jwtManager->create($user);
-        $refresh = $this->refreshGenerator->createForUserWithTtl($user, 2592000);
+        $jwt          = $this->jwtManager->create($user);
+        $refreshToken = $this->createAndSaveRefreshToken($user);
 
         return $this->json([
             'success'       => true,
             'token'         => $jwt,
-            'refresh_token' => $refresh->getRefreshToken(),
+            'refresh_token' => $refreshToken,
             'user'          => [
                 'id'    => (string) $user->getId(),
                 'email' => $user->getEmail(),
@@ -118,10 +135,7 @@ class AuthApiController extends AbstractController
 
         $user = $this->userRepo->findOneBy(['email' => $email]);
         if (!$user) {
-            // FIX #10 : un user créé pour la Passkey n'a pas de mot de passe.
-            // C'est volontaire : il s'authentifiera uniquement via Passkey.
             $user = new User($email);
-            // Pas de setPassword() → password reste null (authorisé par nullable: true dans l'entité)
             $this->em->persist($user);
             $this->em->flush();
         }
@@ -146,17 +160,15 @@ class AuthApiController extends AbstractController
         }
 
         try {
-            // FIX #11 : on passe json_encode($credential) pour que le service
-            // reçoive une string JSON propre (le credential est déjà un tableau décodé)
             $passkeyService->verifyRegistration(json_encode($credential), $user);
 
-            $jwt     = $this->jwtManager->create($user);
-            $refresh = $this->refreshGenerator->createForUserWithTtl($user, 2592000);
+            $jwt          = $this->jwtManager->create($user);
+            $refreshToken = $this->createAndSaveRefreshToken($user);
 
             return $this->json([
                 'success'       => true,
                 'token'         => $jwt,
-                'refresh_token' => $refresh->getRefreshToken(),
+                'refresh_token' => $refreshToken,
                 'user'          => [
                     'id'    => (string) $user->getId(),
                     'email' => $user->getEmail(),
@@ -189,14 +201,14 @@ class AuthApiController extends AbstractController
         }
 
         try {
-            $user    = $passkeyService->verifyLogin(json_encode($credential));
-            $jwt     = $this->jwtManager->create($user);
-            $refresh = $this->refreshGenerator->createForUserWithTtl($user, 2592000);
+            $user         = $passkeyService->verifyLogin(json_encode($credential));
+            $jwt          = $this->jwtManager->create($user);
+            $refreshToken = $this->createAndSaveRefreshToken($user);
 
             return $this->json([
                 'success'       => true,
                 'token'         => $jwt,
-                'refresh_token' => $refresh->getRefreshToken(),
+                'refresh_token' => $refreshToken,
                 'user'          => [
                     'id'    => (string) $user->getId(),
                     'email' => $user->getEmail(),

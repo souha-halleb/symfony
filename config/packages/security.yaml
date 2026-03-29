@@ -29,12 +29,13 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
 
-        # Routes d'authentification publiques (JWT login/register + Passkey)
-        # Doivent être AVANT le firewall "api" pour ne pas exiger un token
+        # Routes d'authentification publiques stateless (JWT login/register + Passkey)
+        # /api/auth/session est EXCLU : elle doit être gérée par le firewall "main"
+        # car elle a besoin d'écrire dans la session PHP Symfony.
         auth_api:
-            pattern: ^/api/auth/
-            stateless: true
-            security: false
+           pattern: ^/api/auth/(login|register|me)
+           stateless: true
+           security: false
 
         # Refresh token public
         api_refresh:
@@ -80,7 +81,8 @@ security:
                 target: home
 
     access_control:
-        - { path: ^/api/auth/,        roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/session,  roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/,         roles: PUBLIC_ACCESS }
         - { path: ^/api/token/refresh, roles: PUBLIC_ACCESS }
         - { path: ^/admin/login,       roles: PUBLIC_ACCESS }
         - { path: ^/admin,             roles: ROLE_ADMIN }

@@ -10,14 +10,14 @@
                 <i class="bi bi-person-lock fs-2"></i>
             </div>
             <h3 class="fw-bold">Connexion</h3>
-            <p class="text-muted small">EventReservation — ISSAT Sousse</p>
+            <p class="text-muted small">EventReservation </p>
         </div>
         <div class="card shadow">
             <div class="card-body p-4">
                 <ul class="nav nav-tabs nav-justified mb-0">
                     <li class="nav-item">
                         <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#pane-password">
-                            <i class="bi bi-lock me-1"></i>Email + Mot de passe
+                            <i class="bi bi-lock me-1"></i>Inscription securisée
                         </button>
                     </li>
                     <li class="nav-item">
@@ -44,7 +44,7 @@
                                 </button>
                             </div>
                         </div>
-                        <button onclick="loginWithJwt()" class="btn btn-primary w-100 py-2">
+                        <button type="button" onclick="loginWithJwt()" class="btn btn-primary w-100 py-2">
                             <i class="bi bi-box-arrow-in-right me-2"></i>Se connecter
                         </button>
                         <hr>
@@ -60,10 +60,11 @@
                             <i class="bi bi-exclamation-triangle me-2"></i>
                             Votre navigateur ne supporte pas WebAuthn.
                         </div>
-                        <button type="button" id="btn-login-passkey" class="btn btn-success w-100 py-2 btn-passkey">                        <h6 class="fw-semibold mb-3">
+                        <div id="passkey-status" class="mb-3 d-none"></div>
+                        <h6 class="fw-semibold mb-3">
                             <i class="bi bi-fingerprint text-success me-2"></i>Se connecter avec une Passkey
                         </h6>
-                        <button id="btn-login-passkey" class="btn btn-success w-100 py-2 btn-passkey">
+                        <button type="button" id="btn-login-passkey" class="btn btn-success w-100 py-2 btn-passkey">
                             <i class="bi bi-shield-check me-2"></i>Utiliser ma Passkey
                         </button>
                         <div class="mt-3 p-3 bg-light rounded small text-muted">
@@ -89,6 +90,12 @@
 {% block scripts %}
 <script src="{{ asset('js/auth.js') }}"></script>
 <script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (localStorage.getItem('jwt_token')) {
+        window.location.href = '/';
+    }
+});
+
 function togglePwd() {
     const input = document.getElementById('login-password');
     const icon  = document.getElementById('eye-icon');
@@ -123,7 +130,11 @@ async function loginWithJwt() {
 
         if (data.token) {
             localStorage.setItem('jwt_token', data.token);
-            localStorage.setItem('refresh_token', data.refresh_token);
+            if (data.refresh_token) {
+                localStorage.setItem('refresh_token', data.refresh_token);
+            } else {
+                localStorage.removeItem('refresh_token');
+            }
             window.location.href = '/';
         } else {
             alertDiv.className = 'alert alert-danger';

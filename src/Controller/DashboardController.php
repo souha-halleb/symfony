@@ -33,11 +33,7 @@ class DashboardController extends AbstractController
 
     // ── Gestion des réservations ──
 
-    /**
-     * FIX #16 : la route admin_reservations existait dans le contrôleur
-     * mais le template admin/reservations.html.twig était absent → 404.
-     * On la garde et on s'assure que le template existe (voir templates/admin/reservations.html.twig).
-     */
+   
     #[Route('/reservations', name: 'admin_reservations')]
     public function reservations(ReservationRepository $repo): Response
     {
@@ -46,29 +42,19 @@ class DashboardController extends AbstractController
         ]);
     }
 
-    // ── Gestion des "utilisateurs" (= réservations dans ce contexte admin) ──
+    // ── Gestion des user ──
 
-    /**
-     * FIX #17 : la route admin_users affichait les réservations sous le nom "users",
-     * ce qui est trompeur mais cohérent avec les templates existants. On conserve ce comportement
-     * en ajoutant aussi la liste des vrais utilisateurs pour un dashboard complet.
-     */
+   
     #[Route('/users', name: 'admin_users')]
     public function users(ReservationRepository $reservationRepo, UserRepository $userRepo): Response
     {
         return $this->render('admin/users.html.twig', [
             'reservations' => $reservationRepo->findAll(),
-            // FIX #17 : on passe aussi la liste des User pour un affichage futur
             'users'        => $userRepo->findAll(),
         ]);
     }
 
-    /**
-     * FIX #18 : admin_user_edit utilisait un paramètre `int $id`
-     * mais le repo->find() retourne null sans lever d'exception.
-     * On lève explicitement createNotFoundException() pour un 404 propre.
-     * De plus, l'action edit modifiait bien la Reservation (pas un User) → cohérent.
-     */
+   
     #[Route('/users/{id}/edit', name: 'admin_user_edit')]
     public function userEdit(int $id, ReservationRepository $repo, Request $request, EntityManagerInterface $em): Response
     {
@@ -91,16 +77,12 @@ class DashboardController extends AbstractController
         ]);
     }
 
-    /**
-     * FIX #19 : admin_user_delete ne vérifiait pas le token CSRF → vulnérabilité CSRF.
-     * On ajoute la vérification du token (cohérent avec le template admin/users.html.twig).
-     */
+    
     #[Route('/users/{id}/delete', name: 'admin_user_delete', methods: ['POST'])]
     public function userDelete(int $id, ReservationRepository $repo, EntityManagerInterface $em, Request $request): Response
     {
         $reservation = $repo->find($id);
         if ($reservation) {
-            // Vérification CSRF (le token est généré dans users.html.twig)
             if (!$this->isCsrfTokenValid('delete' . $id, $request->request->get('_token'))) {
                 throw $this->createAccessDeniedException('Token CSRF invalide.');
             }

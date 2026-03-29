@@ -1,7 +1,5 @@
 {% extends 'base.html.twig' %}
-
 {% block title %}{{ event.title }} — EventReservation{% endblock %}
-
 {% block body %}
 <div class="container">
 <nav aria-label="breadcrumb" class="mb-4">
@@ -10,7 +8,6 @@
         <li class="breadcrumb-item active">{{ event.title }}</li>
     </ol>
 </nav>
-
 <div class="row g-4">
     <div class="col-lg-7">
         {% if event.image %}
@@ -20,12 +17,10 @@
         <h1 class="fw-bold">{{ event.title }}</h1>
         <p class="text-muted">{{ event.description }}</p>
     </div>
-
     <div class="col-lg-5">
         <div class="card sticky-top" style="top:1rem;">
             <div class="card-body p-4">
                 <h4 class="fw-bold mb-4"><i class="bi bi-info-circle me-2 text-primary"></i>Détails</h4>
-
                 <ul class="list-unstyled">
                     <li class="mb-3 d-flex align-items-start gap-3">
                         <i class="bi bi-calendar3 fs-5 text-primary mt-1"></i>
@@ -54,18 +49,16 @@
                         </div>
                     </li>
                 </ul>
-
                 {% if event.availableSeats > 0 %}
-                    <a href="{{ path('reservation_new', {'id': event.id}) }}"
-                       class="btn btn-success btn-lg w-100">
+                    <button id="btn-reserver" class="btn btn-success btn-lg w-100"
+                            data-url="{{ path('reservation_new', {'id': event.id}) }}">
                         <i class="bi bi-ticket-perforated me-2"></i>Réserver ma place
-                    </a>
+                    </button>
                 {% else %}
                     <button class="btn btn-secondary btn-lg w-100" disabled>
                         <i class="bi bi-x-circle me-2"></i>Complet
                     </button>
                 {% endif %}
-
                 <a href="{{ path('home') }}" class="btn btn-outline-secondary w-100 mt-2">
                     <i class="bi bi-arrow-left me-1"></i>Retour aux événements
                 </a>
@@ -74,4 +67,24 @@
     </div>
 </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const btn = document.getElementById('btn-reserver');
+    if (!btn) return;
+
+    btn.addEventListener('click', function () {
+        const token = localStorage.getItem('jwt_token');
+        if (!token) {
+            // Pas connecté → rediriger vers login
+            window.location.href = '/login';
+            return;
+        }
+        // Connecté → aller à la page de réservation
+        window.location.href = btn.getAttribute('data-url');
+    });
+});
+</script>
 {% endblock %}

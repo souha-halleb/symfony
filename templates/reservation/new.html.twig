@@ -20,7 +20,7 @@
                 <h4 class="mb-0"><i class="bi bi-ticket-perforated me-2"></i>Formulaire de réservation</h4>
             </div>
             <div class="card-body p-4">
-                <!-- Résumé de l'événement -->
+
                 <div class="alert alert-info mb-4">
                     <div class="fw-bold">{{ event.title }}</div>
                     <small>
@@ -82,5 +82,24 @@
     </div>
 </div>
 </div>
+{% endblock %}
 
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const token = localStorage.getItem('jwt_token');
+    if (!token) {
+        window.location.href = '/login';
+        return;
+    }
+
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const emailInput = document.getElementById('email');
+        if (emailInput && payload.username) {
+            emailInput.value = payload.username;
+        }
+    } catch (e) {}
+});
+</script>
 {% endblock %}

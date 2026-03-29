@@ -91,20 +91,23 @@ async function registerPasskey(email, displayName = '') {
 
     // 4. Stocker les tokens
     if (result.token) {
-        localStorage.setItem('jwt_token',     result.token);
-        localStorage.setItem('refresh_token', result.refresh_token);
+        localStorage.setItem('jwt_token', result.token);
+        if (result.refresh_token) {
+            localStorage.setItem('refresh_token', result.refresh_token);
+        } else {
+            localStorage.removeItem('refresh_token');
+        }
     }
 
     showStatus('Passkey enregistrée avec succès !', 'success');
     return result;
 }
 
-/* ─── Connexion avec une Passkey existante ─── */
+/* ─── connexion avec  passkey ─── */
 
 async function loginWithPasskey() {
     showStatus('Génération du challenge de connexion…', 'info');
 
-    // 1. Récupérer les options de connexion
     const optRes = await fetch('/api/auth/login/options', { method: 'POST' });
 
     if (!optRes.ok) {
@@ -115,7 +118,6 @@ async function loginWithPasskey() {
     const options = await optRes.json();
     showStatus('Veuillez vous authentifier avec votre Passkey…', 'info');
 
-    // 2. Demander l'authentification à l'utilisateur
     let assertion;
     try {
         assertion = await navigator.credentials.get({
@@ -134,7 +136,6 @@ async function loginWithPasskey() {
 
     showStatus('Vérification…', 'info');
 
-    // 3. Vérifier avec le serveur
     const verifyRes = await fetch('/api/auth/login/verify', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -160,15 +161,125 @@ async function loginWithPasskey() {
     if (!verifyRes.ok) throw new Error(result.error || 'Échec de l\'authentification.');
 
     if (result.token) {
-        localStorage.setItem('jwt_token',     result.token);
-        localStorage.setItem('refresh_token', result.refresh_token);
+        localStorage.setItem('jwt_token', result.token);
+        if (result.refresh_token) {
+            localStorage.setItem('refresh_token', result.refresh_token);
+        } else {
+            localStorage.removeItem('refresh_token');
+        }
     }
 
     showStatus('Connexion réussie !', 'success');
     return result;
 }
 
-/* ─── Appel fetch authentifié avec le JWT ─── */
+/* ─── Connexion JWT ─── */
+
+async function loginWithJwt() {
+    const form     = document.getElementById('login-form');
+    if (!form) return;
+    const email    = form.querySelector('input[name="email"]').value.trim();
+    const password = form.querySelector('input[name="password"]').value;
+
+    const alertDiv = document.getElementById('login-alert');
+    function showAlert(msg, type = 'danger') {
+        if (!alertDiv) return;
+        alertDiv.className = `alert alert-${type}`;
+        alertDiv.textContent = msg;
+        alertDiv.classList.remove('d-none');
+    }
+
+    if (!email || !password) {
+        showAlert('Veuillez remplir tous les champs.', 'warning');
+        return;
+    }
+
+    try {
+        const res  = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            showAlert(data.error || 'Email ou mot de passe incorrect.', 'danger');
+            return;
+        }
+
+        if (data.token) {
+            localStorage.setItem('jwt_token', data.token);
+            if (data.refresh_token) {
+                localStorage.setItem('refresh_token', data.refresh_token);
+            } else {
+                localStorage.removeItem('refresh_token');
+            }
+            window.location.href = '/';
+        }
+    } catch (e) {
+        showAlert('Erreur serveur lors de la connexion.', 'danger');
+    }
+}
+
+function showRegisterAlert(message, type = 'danger') {
+    const alertDiv = document.getElementById('register-alert');
+    if (!alertDiv) return;
+    alertDiv.className = `alert alert-${type}`;
+    alertDiv.textContent = message;
+    alertDiv.classList.remove('d-none');
+}
+
+async function registerWithJwt() {
+    const form     = document.getElementById('register-form');
+    const email    = form.querySelector('input[name="email"]').value.trim();
+    const password = form.querySelector('input[name="password"]').value;
+    const confirm  = form.querySelector('input[name="confirm"]').value;
+
+    if (!email || !password || !confirm) {
+        showRegisterAlert('Veuillez remplir tous les champs.', 'warning');
+        return;
+    }
+
+    if (password !== confirm) {
+        showRegisterAlert('Les mots de passe ne correspondent pas.', 'warning');
+        return;
+    }
+
+    if (password.length < 6) {
+        showRegisterAlert('Le mot de passe doit contenir au moins 6 caractères.', 'warning');
+        return;
+    }
+
+    try {
+        const res  = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            showRegisterAlert(data.error || 'Erreur lors de l\'inscription.', 'danger');
+            return;
+        }
+
+        if (data.token) {
+            localStorage.setItem('jwt_token', data.token);
+            if (data.refresh_token) {
+                localStorage.setItem('refresh_token', data.refresh_token);
+            } else {
+                localStorage.removeItem('refresh_token');
+            }
+            window.location.href = '/';
+            return;
+        }
+
+        showRegisterAlert('Inscription réussie.', 'success');
+    } catch (e) {
+        showRegisterAlert('Erreur serveur lors de l\'inscription.', 'danger');
+    }
+}
+
 
 async function authFetch(url, options = {}) {
     const token   = localStorage.getItem('jwt_token');
@@ -179,7 +290,7 @@ async function authFetch(url, options = {}) {
 
     let res = await fetch(url, { ...options, headers });
 
-    // Token expiré → tenter un refresh automatique
+    //  un refresh automatique
     if (res.status === 401) {
         const refreshed = await refreshToken();
         if (refreshed) {
@@ -217,7 +328,6 @@ async function refreshToken() {
     return true;
 }
 
-/* ─── Déconnexion ─── */
 
 function logout() {
     localStorage.removeItem('jwt_token');
@@ -225,13 +335,15 @@ function logout() {
     showStatus('Déconnecté.', 'info');
 }
 
-/* ─── Vérifier si WebAuthn est supporté ─── */
+window.registerWithJwt = registerWithJwt;
+window.loginWithJwt = loginWithJwt;
+window.logout = logout;
+
 
 function isWebAuthnSupported() {
     return !!(window.PublicKeyCredential && navigator.credentials);
 }
 
-/* ─── Utilitaire d'affichage des messages ─── */
 
 function showStatus(message, type = 'info') {
     const el = document.getElementById('passkey-status');
@@ -242,7 +354,6 @@ function showStatus(message, type = 'info') {
     el.style.display = 'block';
 }
 
-/* ─── Initialisation des boutons au chargement du DOM ─── */
 
 document.addEventListener('DOMContentLoaded', () => {
     if (!isWebAuthnSupported()) {
@@ -255,7 +366,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (warn) warn.style.display = 'block';
     }
 
-    // Bouton inscription Passkey
     const btnRegister = document.getElementById('btn-register-passkey');
     if (btnRegister) {
         btnRegister.addEventListener('click', async () => {
@@ -277,7 +387,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Bouton connexion Passkey
     const btnLogin = document.getElementById('btn-login-passkey');
     if (btnLogin) {
         btnLogin.addEventListener('click', async () => {

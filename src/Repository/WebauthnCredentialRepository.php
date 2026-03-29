@@ -7,6 +7,7 @@ use App\Entity\WebauthnCredential;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
+use ParagonIE\ConstantTime\Base64UrlSafe;
 use Webauthn\PublicKeyCredentialSource;
 
 /**
@@ -33,21 +34,22 @@ class WebauthnCredentialRepository extends ServiceEntityRepository
         return $credential;
     }
 
-    /**
-     * FIX #6 : la comparaison des credentialId doit se faire en base64url
-     * car getPublicKeyCredentialId() retourne des bytes binaires bruts.
-     * On compare les deux côtés en base64url pour éviter les faux-négatifs.
-     */
+   
     public function findByCredentialId(string $credentialId): ?WebauthnCredential
     {
         $all = $this->findAll();
         foreach ($all as $credential) {
             $source = $credential->getCredentialSource();
-            // Comparaison binaire directe (les deux sont des strings brutes)
+
             if ($source->getPublicKeyCredentialId() === $credentialId) {
                 return $credential;
             }
+
+            if (Base64UrlSafe::encodeUnpadded($source->getPublicKeyCredentialId()) === $credentialId) {
+                return $credential;
+            }
         }
+
         return null;
     }
 

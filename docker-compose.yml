@@ -12,13 +12,16 @@ services:
     environment:
       APP_ENV: dev
       APP_SECRET: issat2026secretkey32charsminimum
-      DATABASE_URL: "postgresql://app_user:app_password@db:5432/event_reservation?serverVersion=14&charset=utf8"
+      DATABASE_URL: "postgresql://app_user:app_password@db:5432/event_reservation?serverVersion=15&charset=utf8"
       JWT_SECRET_KEY: /var/www/config/jwt/private.pem
       JWT_PUBLIC_KEY: /var/www/config/jwt/public.pem
       JWT_PASSPHRASE: souhq
-      JWT_TOKEN_TTL: 3600
+      JWT_TOKEN_TTL: "3600"
       APP_DOMAIN: localhost
       WEBAUTHN_RP_NAME: "EventReservation App"
+      MAILER_DSN: "gmail://souhahalleb33@gmail.com:kwfudmaqszgwbtwe@default"
+      MAILER_FROM_EMAIL: "noreply@eventreservation.com"
+      MAILER_FROM_NAME: "EventReservation"
     depends_on:
       db:
         condition: service_healthy
@@ -72,6 +75,17 @@ services:
       - db
     networks:
       - app_network
+
+  # mailhog désactivé — emails envoyés via Gmail SMTP
+  # mailhog:
+  #   image: mailhog/mailhog:latest
+  #   container_name: event_mailhog
+  #   restart: unless-stopped
+  #   ports:
+  #     - "1025:1025"
+  #     - "8025:8025"
+  #   networks:
+  #     - app_network
 
 volumes:
   postgres_data:
