@@ -34,6 +34,7 @@ async function registerPasskey(email, displayName = '') {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ email, displayName }),
+        credentials: 'include',
     });
 
     if (!optRes.ok) {
@@ -67,7 +68,6 @@ async function registerPasskey(email, displayName = '') {
 
     showStatus('Vérification en cours…', 'info');
 
-    // 3. Envoyer la réponse au serveur
     const verifyRes = await fetch('/api/auth/register/verify', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -84,6 +84,7 @@ async function registerPasskey(email, displayName = '') {
                 clientExtensionResults: credential.getClientExtensionResults(),
             },
         }),
+        credentials: 'include',
     });
 
     const result = await verifyRes.json();
@@ -108,7 +109,7 @@ async function registerPasskey(email, displayName = '') {
 async function loginWithPasskey() {
     showStatus('Génération du challenge de connexion…', 'info');
 
-    const optRes = await fetch('/api/auth/login/options', { method: 'POST' });
+    const optRes = await fetch('/api/auth/login/options', { method: 'POST', credentials: 'include' });
 
     if (!optRes.ok) {
         const err = await optRes.json();
@@ -155,6 +156,7 @@ async function loginWithPasskey() {
                 clientExtensionResults: assertion.getClientExtensionResults(),
             },
         }),
+        credentials: 'include',
     });
 
     const result = await verifyRes.json();
@@ -302,7 +304,6 @@ async function authFetch(url, options = {}) {
     return res;
 }
 
-/* ─── Rafraîchissement du token JWT ─── */
 
 async function refreshToken() {
     const refresh = localStorage.getItem('refresh_token');

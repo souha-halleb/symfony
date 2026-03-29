@@ -14,7 +14,7 @@
         "doctrine/doctrine-migrations-bundle": "^3.3",
         "doctrine/orm": "^3.0",
         "gesdinet/jwt-refresh-token-bundle": "*",
-        "lexik/jwt-authentication-bundle": "^2.20",
+        "lexik/jwt-authentication-bundle": "*",
         "symfony/asset": "7.*",
         "symfony/config": "7.*",
         "symfony/console": "7.*",
