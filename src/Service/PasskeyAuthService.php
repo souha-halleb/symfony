@@ -21,7 +21,6 @@ use Webauthn\AuthenticatorAssertionResponseValidator;
 
 class PasskeyAuthService
 {
-    // ✅ Adapte ces valeurs à ton projet
     private const RP_NAME = 'EventReservation';
     private const RP_ID   = 'localhost';
     private const ORIGIN  = 'http://localhost:8080';
@@ -35,7 +34,6 @@ class PasskeyAuthService
         private EntityManagerInterface                    $em,
     ) {}
 
-    /* ── REGISTER OPTIONS ── */
 
     public function getRegistrationOptions(User $user): array
 {
@@ -52,7 +50,6 @@ class PasskeyAuthService
 
     $challenge = random_bytes(32);
 
-    // ✅ v4.x — constructeur direct, pas de méthodes statiques
     $options = PublicKeyCredentialCreationOptions::create(
         rp: $rp,
         user: $userEntity,
@@ -82,14 +79,12 @@ class PasskeyAuthService
             throw new \RuntimeException('Session expirée. Recommencez l\'enregistrement.');
         }
 
-        // ✅ Désérialiser les options depuis la session
         $options = $this->serializer->deserialize(
             $optionRaw,
             PublicKeyCredentialCreationOptions::class,
             'json'
         );
 
-        // ✅ Désérialiser la réponse du client
         $publicKeyCredential = $this->serializer->deserialize(
             $responseJson,
             PublicKeyCredential::class,
@@ -101,18 +96,16 @@ class PasskeyAuthService
             throw new \RuntimeException('Réponse attestation invalide.');
         }
 
-        // ✅ API v4 — on passe l'origin en string, pas la Request
         $credentialSource = $this->attestationValidator->check(
             $response,
             $options,
-            self::ORIGIN,       // ← 'http://localhost:8080'
+            self::ORIGIN,       
         );
 
         $this->credRepo->saveCredential($user, $credentialSource);
         $session->remove('webauthn_registration');
     }
 
-    /* ── LOGIN OPTIONS ── */
 
     public function getLoginOptions(): array
     {
@@ -132,7 +125,6 @@ class PasskeyAuthService
         return json_decode(json_encode($options), true);
     }
 
-    /* ── LOGIN VERIFY ── */
 
     public function verifyLogin(string $responseJson): User
     {
@@ -160,12 +152,11 @@ class PasskeyAuthService
             throw new \RuntimeException('Réponse assertion invalide.');
         }
 
-        // ✅ API v4
         $credentialSource = $this->assertionValidator->check(
             $publicKeyCredential->getRawId(),
             $response,
             $options,
-            self::ORIGIN,       // ← 'http://localhost:8080'
+            self::ORIGIN,      
             null,
         );
 
