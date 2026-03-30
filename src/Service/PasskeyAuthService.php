@@ -37,10 +37,7 @@ class PasskeyAuthService
 
     public function getRegistrationOptions(User $user): array
 {
-    $rp = PublicKeyCredentialRpEntity::create(
-        self::RP_NAME,
-        self::RP_ID,
-    );
+    $rp = PublicKeyCredentialRpEntity::create(self::RP_NAME, self::RP_ID);
 
     $userEntity = PublicKeyCredentialUserEntity::create(
         $user->getEmail(),
@@ -55,58 +52,70 @@ class PasskeyAuthService
         user: $userEntity,
         challenge: $challenge,
         pubKeyCredParams: [
-            PublicKeyCredentialParameters::create('public-key', -7),   
-            PublicKeyCredentialParameters::create('public-key', -257), 
+            PublicKeyCredentialParameters::create('public-key', -7),
+            PublicKeyCredentialParameters::create('public-key', -257),
         ],
         timeout: 60000,
     );
 
-    $this->requestStack->getSession()->set(
+    $session = $this->requestStack->getSession();
+
+    // ✅ Stocker le challenge en base64 séparément
+    $session->set('webauthn_challenge', base64_encode($challenge));
+
+    // ✅ Stocker les options sérialisées proprement
+    $session->set(
         'webauthn_registration',
-        json_encode($options)
+        $this->serializer->serialize($options, 'json')
     );
 
-    return json_decode(json_encode($options), true);
+    return json_decode($this->serializer->serialize($options, 'json'), true);
 }
-    
 
-    public function verifyRegistration(string $responseJson, User $user): void
-    {
-        $session   = $this->requestStack->getSession();
-        $optionRaw = $session->get('webauthn_registration');
+public function verifyRegistration(string $responseJson, User $user): void
+{
+    $session   = $this->requestStack->getSession();
+    $optionRaw = $session->get('webauthn_registration');
 
-        if (!$optionRaw) {
-            throw new \RuntimeException('Session expirée. Recommencez l\'enregistrement.');
-        }
+    if (!$optionRaw) {
+        throw new \RuntimeException('Session expirée. Recommencez l\'enregistrement.');
+    }
 
-        $options = $this->serializer->deserialize(
-            $optionRaw,
-            PublicKeyCredentialCreationOptions::class,
-            'json'
-        );
+    $options = $this->serializer->deserialize(
+        $optionRaw,
+        PublicKeyCredentialCreationOptions::class,
+        'json'
+    );
 
-        $publicKeyCredential = $this->serializer->deserialize(
-            $responseJson,
-            PublicKeyCredential::class,
-            'json'
-        );
+    $publicKeyCredential = $this->serializer->deserialize(
+        $responseJson,
+        PublicKeyCredential::class,
+        'json'
+    );
 
-        $response = $publicKeyCredential->getResponse();
-        if (!$response instanceof AuthenticatorAttestationResponse) {
-            throw new \RuntimeException('Réponse attestation invalide.');
-        }
+    $response = $publicKeyCredential->getResponse();
+    if (!$response instanceof AuthenticatorAttestationResponse) {
+        throw new \RuntimeException('Réponse attestation invalide.');
+    }
 
+    try {
         $credentialSource = $this->attestationValidator->check(
             $response,
             $options,
-            self::ORIGIN,       
+    self::SECURED_ORIGINS,  // ← tableau — c'est ça le problème
         );
-
-        $this->credRepo->saveCredential($user, $credentialSource);
-        $session->remove('webauthn_registration');
+    } catch (\Throwable $e) {
+        // ✅ Log l'erreur exacte
+        error_log('WEBAUTHN ERROR: ' . $e->getMessage());
+        error_log('WEBAUTHN CLASS: ' . get_class($e));
+        error_log('WEBAUTHN TRACE: ' . $e->getTraceAsString());
+        throw new \RuntimeException('Vérification échouée : ' . $e->getMessage());
     }
 
-
+    $this->credRepo->saveCredential($user, $credentialSource);
+    $session->remove('webauthn_registration');
+    $session->remove('webauthn_challenge');
+}
     public function getLoginOptions(): array
     {
         $challenge = random_bytes(32);
@@ -156,7 +165,7 @@ class PasskeyAuthService
             $publicKeyCredential->getRawId(),
             $response,
             $options,
-            self::ORIGIN,      
+             self::SECURED_ORIGINS,     
             null,
         );
 

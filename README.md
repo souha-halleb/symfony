@@ -125,3 +125,5 @@ MAILER_DSN=gmail://your.email@gmail.com:your_app_password@default
 MAILER_FROM_EMAIL=noreply@eventreservation.com
 MAILER_FROM_NAME=EventReservation
 ```
+## Capture d'écran
+passkey.png
